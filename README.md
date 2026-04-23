@@ -42,6 +42,9 @@ Install the necessary dependencies via pip:
 * `pydub` - For seamless audio format conversion.
 * `webdriver-manager` - To eliminate manual WebDriver installation and path issues.
 
+## License
+This project is licensed under the GNU General Public License v3.0 - see the [LICENSE](LICENSE) file for details.
+
 ```
 GNU General Public License v3.0
 Copyright (c) 2026 Cryptix
