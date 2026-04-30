@@ -19,7 +19,7 @@ from webdriver_manager.chrome import ChromeDriverManager
 from webdriver_manager.firefox import GeckoDriverManager
 
 def choose_browser():
-    """Prompts user for browser choice and configures international settings."""
+    # Prompt user for browser choice
     while True:
         print("\nWhich browser would you like to use?")
         print("1: Firefox")
@@ -27,6 +27,7 @@ def choose_browser():
         choice = input("Enter 1 or 2: ").strip()
         
         if choice == '1':
+            # Configure Firefox with US-English
             print("[Info] Setting up Firefox (Language: en-US)...")
             options = webdriver.FirefoxOptions()
             options.set_preference("intl.accept_languages", "en-US")
@@ -34,6 +35,7 @@ def choose_browser():
             return webdriver.Firefox(service=service, options=options)
         
         elif choice == '2':
+            # Configure Chrome with US-English
             print("[Info] Setting up Chrome (Language: en-US)...")
             options = webdriver.ChromeOptions()
             options.add_experimental_option("detach", True)
@@ -44,20 +46,22 @@ def choose_browser():
             print("[Warning] Invalid input. Please enter '1' or '2'.")
 
 def process_audio(src_url, mp3_path, wav_path):
-    """Downloads the audio challenge and transcribes it via Google Speech Recognition."""
+    # Download audio payload
     print("[Info] Downloading audio payload...")
     urllib.request.urlretrieve(src_url, mp3_path)
     
+    # Convert MP3 to WAV for speech recognition
     print("[Info] Converting MP3 to WAV format...")
     AudioSegment.from_mp3(mp3_path).export(wav_path, format="wav")
     
+    # Transcribe audio using Google Speech Recognition
     print("[Info] Transcribing audio...")
     recognizer = sr.Recognizer()
     with sr.AudioFile(wav_path) as source:
         audio = recognizer.record(source)
         
     try:
-        # Transcribe using en-US for international compatibility
+        # Enforce en-US for international compatibility
         text = recognizer.recognize_google(audio, language="en-US")
         return text
     except sr.UnknownValueError:
@@ -66,11 +70,11 @@ def process_audio(src_url, mp3_path, wav_path):
         raise Exception(f"Google Speech Recognition service error: {e}")
 
 def human_delay():
-    """Simulates natural user behavior with random delays."""
+    # Simulate natural user behavior
     time.sleep(random.uniform(1.2, 2.8))
 
 def main():
-    # File path configuration
+    # Setup temporary file paths
     data_path = os.getcwd()
     mp3_file = os.path.join(data_path, "audio.mp3")
     wav_file = os.path.join(data_path, "audio.wav")
@@ -82,48 +86,48 @@ def main():
         print("[Info] Accessing reCAPTCHA demo page...")
         browser.get("https://www.google.com/recaptcha/api2/demo")
         
-        # Step 1: Interact with the main checkbox iframe
+        # Switch to checkbox iframe and click
         print("[Info] Locating reCAPTCHA checkbox...")
         checkbox_frame = wait.until(EC.presence_of_element_located((By.XPATH, "//iframe[contains(@src, 'anchor')]")))
         browser.switch_to.frame(checkbox_frame)
         human_delay()
         wait.until(EC.element_to_be_clickable((By.CLASS_NAME, "recaptcha-checkbox-border"))).click()
         
-        # Step 2: Switch to the challenge popup iframe
+        # Switch to challenge popup iframe
         browser.switch_to.default_content()
         print("[Info] Waiting for challenge popup...")
         challenge_frame = wait.until(EC.presence_of_element_located((By.XPATH, "//iframe[contains(@src, 'bframe')]")))
         browser.switch_to.frame(challenge_frame)
         
-        # Step 3: Trigger the audio challenge
+        # Trigger the audio challenge
         human_delay()
         wait.until(EC.element_to_be_clickable((By.ID, "recaptcha-audio-button"))).click()
         
-        # Step 4: Refresh iframe focus for the audio controls
+        # Refresh iframe focus for the audio controls
         browser.switch_to.default_content()
         challenge_frame = wait.until(EC.presence_of_element_located((By.XPATH, "//iframe[contains(@src, 'bframe')]")))
         browser.switch_to.frame(challenge_frame)
         
-        # Step 5: Play audio snippet
+        # Play audio snippet
         print("[Info] Playing audio challenge...")
         human_delay()
         play_btn_xpath = "//div[contains(@class, 'rc-audiochallenge-play-button')]/button | //button[@id='audio-instructions']"
         wait.until(EC.element_to_be_clickable((By.XPATH, play_btn_xpath))).click()
         
-        # Step 6: Extract source URL and transcribe
+        # Extract source URL and transcribe
         audio_element = wait.until(EC.presence_of_element_located((By.ID, "audio-source")))
         src = audio_element.get_attribute("src")
         recognized_text = process_audio(src, mp3_file, wav_file)
         
         print(f"\n[Success] Recognized Text: {recognized_text}\n")
         
-        # Step 7: Input text and verify within the popup
+        # Input transcribed text and verify
         input_field = wait.until(EC.element_to_be_clickable((By.ID, "audio-response")))
         input_field.send_keys(recognized_text.lower())
         human_delay()
         wait.until(EC.element_to_be_clickable((By.ID, "recaptcha-verify-button"))).click()
         
-        # Step 8: Final Form Submission on the main page
+        # Submit the final form on the main page
         print("[Info] Submitting final form...")
         browser.switch_to.default_content() 
         human_delay()
